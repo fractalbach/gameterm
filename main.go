@@ -30,6 +30,7 @@ import (
 	"time"
 
 	"github.com/nsf/termbox-go"
+	"golang.org/x/text/width"
 )
 
 const (
@@ -37,7 +38,6 @@ const (
 )
 
 var (
-	player0    = '@'
 	xmax, ymax = 30, 30
 	xmin, ymin = 2, 2
 	myX, myY   = 10, 10
@@ -45,10 +45,18 @@ var (
 	bg         = termbox.Attribute(37)
 )
 
-func set(x, y int, r rune) {
-	termbox.SetCell(x, y, r,
-		termbox.ColorDefault, termbox.ColorDefault)
-}
+var (
+	player0   = '@'
+	wallNW    = widen('╔')
+	wallNE    = widen('╗')
+	wallSW    = widen('╚')
+	wallSE    = widen('╝')
+	wallHoriz = widen('═')
+	wallVert  = widen('║')
+)
+
+// Controls
+// ----------------------------------------
 
 func up() {
 	if myY > ymin {
@@ -71,23 +79,22 @@ func right() {
 	}
 }
 
+// Display Backgrounds
+// ----------------------------------------
+
 func box() {
-	set(xmin-1, ymin-1, '╔')
-	set(xmin-1, ymax+1, '╚')
-	set(xmax+1, ymin-1, '╗')
-	set(xmax+1, ymax+1, '╝')
+	set(xmin-1, ymin-1, wallNW)
+	set(xmin-1, ymax+1, wallSW)
+	set(xmax+1, ymin-1, wallNE)
+	set(xmax+1, ymax+1, wallSE)
 	for i := xmin; i <= xmax; i++ {
-		set(i, ymin-1, '═')
-		set(i, ymax+1, '═')
+		set(i, ymin-1, wallHoriz)
+		set(i, ymax+1, wallHoriz)
 	}
 	for i := ymin; i <= ymax; i++ {
-		set(xmin-1, i, '║')
-		set(xmax+1, i, '║')
+		set(xmin-1, i, wallVert)
+		set(xmax+1, i, wallVert)
 	}
-}
-
-func clear() {
-	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 }
 
 func draw() {
@@ -96,6 +103,31 @@ func draw() {
 	termbox.SetCell(myX, myY, player0, c1, bg)
 	termbox.Flush()
 }
+
+// Helper functions
+// ----------------------------------------
+
+func widen(r rune) rune {
+	w := width.Widen.String(string(r))
+	var wr rune
+	for _, v := range w {
+		wr = v
+		break
+	}
+	return wr
+}
+
+func set(x, y int, r rune) {
+	termbox.SetCell(x, y, r,
+		termbox.ColorDefault, termbox.ColorDefault)
+}
+
+func clear() {
+	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+}
+
+// Main Loop
+// ----------------------------------------
 
 func enterTerm() {
 	err := termbox.Init()
@@ -108,13 +140,13 @@ func enterTerm() {
 loop:
 	for {
 		draw()
-		ev := termbox.PollEvent();
-		
+		ev := termbox.PollEvent()
+
 		switch ev.Ch {
 		case 'q':
 			break loop
 		}
-		
+
 		switch ev.Key {
 		case termbox.KeyEsc:
 			break loop
